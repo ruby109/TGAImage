@@ -10,10 +10,16 @@ let package = Package(
             name: "TGAImage",
             targets: ["TGAImage"]),
     ],
+    dependencies: [
+            .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0"),
+            // other dependencies
+        ],
     targets: [
         .target(
             name: "TGAImage",
-            dependencies: []),
+            dependencies: [
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ]),
         .testTarget(
             name: "TGAImageTests",
             dependencies: ["TGAImage"],
