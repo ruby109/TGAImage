@@ -16,8 +16,8 @@ let package = Package(
             targets: ["TGAImage"])
     ],
     dependencies: [
-            .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0"),
-            // other dependencies
+        .package(url: "https://github.com/apple/swift-argument-parser", from: "0.4.0"),
+        .package(url: "https://github.com/uraimo/Bitter.git", from: "4.0.0"),
         ],
     targets: [
         .target(
@@ -29,6 +29,7 @@ let package = Package(
         .target(
             name: "TGAImage",
             dependencies: [
+                .product(name: "Bitter", package: "Bitter"),
             ]),
         .testTarget(
             name: "TGAImageTests",

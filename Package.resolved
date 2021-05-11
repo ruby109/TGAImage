@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Bitter",
+        "repositoryURL": "https://github.com/uraimo/Bitter.git",
+        "state": {
+          "branch": null,
+          "revision": "9366df81fbdc11122a03436aeffb17c96799549a",
+          "version": "4.0.0"
+        }
+      },
+      {
         "package": "swift-argument-parser",
         "repositoryURL": "https://github.com/apple/swift-argument-parser",
         "state": {

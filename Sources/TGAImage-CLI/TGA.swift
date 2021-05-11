@@ -29,8 +29,7 @@ struct TGA: ParsableCommand {
         
         print(self.inputFilePath)
         
-        print(FileManager.default.fileExists(atPath: self.inputFilePath))
-        guard let data = FileManager.default.contents(atPath: self.inputFilePath) else {
+        guard FileManager.default.fileExists(atPath: self.inputFilePath), let data = FileManager.default.contents(atPath: self.inputFilePath) else {
             throw ValidationError("Please check your input file path.")
         }
         
@@ -42,7 +41,27 @@ struct TGA: ParsableCommand {
         
         if self.decoding {
             let decoder = TGADecoder()
-            print(decoder.getTGAHeader(by: data[0...17]))
+            if let header = decoder.getTGAHeader(by: data[0...17]) {
+                print(header)
+                let imageData = decoder.getTGAImageData(by: data, header: header)
+                let image = generateCGImage(from: imageData.pixels, width: Int(header.imageSpecification.imageWidth), height: Int(header.imageSpecification.imageHeight))
+                
+                print(writeCGImage(image!, to: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("/test.png")))
+                
+                
+            }
+            
+            
+            
+        } else if self.encoding {
+            fatalError("sorry, encode is not supported at now")
         }
     }
 }
+
+@discardableResult func writeCGImage(_ image: CGImage, to destinationURL: URL) -> Bool {
+    guard let destination = CGImageDestinationCreateWithURL(destinationURL as CFURL, kUTTypePNG, 1, nil) else { return false }
+    CGImageDestinationAddImage(destination, image, nil)
+    return CGImageDestinationFinalize(destination)
+}
+
