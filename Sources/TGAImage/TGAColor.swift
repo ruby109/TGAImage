@@ -17,6 +17,9 @@ public struct TGAColor : Equatable {
 
     /// The "red" color component as an 8-bit value (0-255).
     public let r: ColorDepth
+    
+    /// The alpha component as an 8-bit value(0-255).
+    public let a: ColorDepth
 
     /// Creates a color object using the specified RGB component values.
     ///
@@ -24,10 +27,11 @@ public struct TGAColor : Equatable {
     ///     - r: The "red" color component as an 8-bit value (0-255).
     ///     - g: The "green" color component as an 8-bit value (0-255).
     ///     - b: The "blue" color component as an 8-bit value (0-255).
-    public init(r: ColorDepth, g: ColorDepth, b: ColorDepth) {
+    public init(r: ColorDepth, g: ColorDepth, b: ColorDepth, a: ColorDepth = 0xFF) {
         self.r = r
         self.g = g
         self.b = b
+        self.a = a
     }
 
 }

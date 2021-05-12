@@ -8,13 +8,13 @@
 import Foundation
 import TGAImage
 public struct PixelData {
-//    var a: UInt8
+    var a: UInt8
     var r: UInt8
     var g: UInt8
     var b: UInt8
     
     init(tgaColor: TGAColor) {
-//        self.a = 1
+        self.a = tgaColor.a
         self.r = tgaColor.r
         self.g = tgaColor.g
         self.b = tgaColor.b
@@ -29,9 +29,9 @@ func generateCGImage(from pixels: [TGAColor], width: Int, height: Int) -> CGImag
     guard pixels.count == width * height else { return nil }
     
     let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
-    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue)
+    let bitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedFirst.rawValue)
     let bitsPerComponent = 8
-    let bitsPerPixel = 24
+    let bitsPerPixel = 32
     
     var data = pixels.map{ PixelData(tgaColor: $0) } // Copy to mutable []
     guard let providerRef = CGDataProvider(data: NSData(bytes: &data,

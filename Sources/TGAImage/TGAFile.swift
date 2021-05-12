@@ -83,6 +83,19 @@ public extension TGAFile {
             /// This field indicates the number of bits per pixel (1 byte).
             public let pixelDepth: UInt8 // 8 * 3
             /// These bits specify the number of attribute bits perpixel (1 byte).
+            /// - image_descriptor (1 byte):
+            ///     - bit 3-0 : number of attribute bit per pixel
+            ///     - bit 5-4 : order in which pixel data is transferred
+            ///              from the file to the screen
+            ///  +-----------------------------------+-------------+-------------+
+            ///  | Screen destination of first pixel | Image bit 5 | Image bit 4 |
+            ///  +-----------------------------------+-------------+-------------+
+            ///  | bottom left                       |           0 |           0 |
+            ///  | bottom right                      |           0 |           1 |
+            ///  | top left                          |           1 |           0 |
+            ///  | top right                         |           1 |           1 |
+            ///  +-----------------------------------+-------------+-------------+
+            ///      - bit 7-6 : must be zero to insure future compatibility
             public let imageDescriptor: UInt8 // 8 * 4
             
             init(imageOriginX: UInt16 = 0, imageOriginY: UInt16 = 0, imageWidth: UInt16, imageHeight: UInt16, pixelDepth: UInt8 = 24, imageDescriptor: UInt8 = 32) {
@@ -148,261 +161,10 @@ public extension TGAFile {
                                                          pixelDepth: UInt8(data[16]),
                                                          imageDescriptor: UInt8(data[17]))
             
-            
         }
 
     }
 
-}
-
-// MARK: - TGAFile.ImageData
-
-public extension TGAFile {
-
-    /// IMAGE DATA
-    ///
-    /// [Specification](http://www.dca.fee.unicamp.br/~martino/disciplinas/ea978/tgaffs.pdf) Page 10 ff.
-    struct ImageData {
-
-        /// The pixels of the (wrapped) `TGAImage`.
-        public let pixels: [TGAColor]
-
-        /// Creates the "TGA IMAGE DATA" from the given pixel data.
-        ///
-        /// - Parameters:
-        ///     - pixels: The pixels of the (wrapped) `TGAImage`.
-        init(pixels: [TGAColor]) {
-            self.pixels = pixels
-        }
-
-        /// Returns the (raw) `Data` representation of the "TGA IMAGE DATA".
-        func data() -> Data {
-            Data(bytes: pixels, count: MemoryLayout<TGAColor>.size * pixels.count)
-        }
-        
-        
-        init(data: Data, header: TGAFile.Header) {
-            let imageSpec = header.imageSpecification
-            let width = Int(imageSpec.imageWidth)
-            let height = Int(imageSpec.imageHeight)
-            let count = Int(header.imageSpecification.pixelDepth / 8)
-            let offset = Int(18 + header.imageIDLength)
-            var pixels = [TGAColor](repeating: TGAColor(r: 0, g: 0, b: 0), count: Int(width * height))
-            switch header.imageType {
-            case .noImageData:
-                self.pixels = []
-            case .uncompressedTrueColor:
-                switch (imageSpec.imageOriginX, imageSpec.imageOriginY) {
-                case (0, 0): //lower left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let b = data[index + 0]
-                            let r = data[index + 1]
-                            let g = data[index + 2]
-                            pixels[width * (height - i - 1) + j] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                case (0, _): //upper left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let b = data[index + 0]
-                            let r = data[index + 1]
-                            let g = data[index + 2]
-                            pixels[width * i + j] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                case (_, 0): //lower right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let b = data[index + 0]
-                            let r = data[index + 1]
-                            let g = data[index + 2]
-                            pixels[(height - i - 1) + (width - j - 1)] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                case (_, _): //upper right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let b = data[index + 0]
-                            let r = data[index + 1]
-                            let g = data[index + 2]
-                            pixels[width * (height - i - 1) + (width - j - 1)] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                }
-                self.pixels = pixels
-            case .uncompressedBlackAndWhite:
-                switch (imageSpec.imageOriginX, imageSpec.imageOriginY) {
-                case (0, 0): //lower left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let e = data[index + 0]
-                            pixels[width * (height - i - 1) + j] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                case (0, _): //upper left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let e = data[index + 0]
-                            pixels[width * i + j] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                case (_, 0): //lower right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let e = data[index + 0]
-                            pixels[(height - i - 1) + (width - j - 1)] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                case (_, _): // upper right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = offset + count * width * i + count * j
-                            let e = data[index + 0]
-                            pixels[width * (height - i - 1) + (width - j - 1)] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                }
-                self.pixels = pixels
-            case .runlengthEncodedRGB:
-                let decodedData = decodeRunLengthData(width: width, height: height, depth: Int(imageSpec.pixelDepth), data: data, offset: offset)
-                switch (imageSpec.imageOriginX, imageSpec.imageOriginY) {
-                case (0, 0): //lower left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let b = decodedData[index + 0]
-                            let r = decodedData[index + 1]
-                            let g = decodedData[index + 2]
-                            pixels[width * (height - i - 1) + j] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                case (0, _): //upper left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let b = decodedData[index + 0]
-                            let r = decodedData[index + 1]
-                            let g = decodedData[index + 2]
-                            pixels[width * i + j] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                case (_, 0): //lower right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let b = decodedData[index + 0]
-                            let r = decodedData[index + 1]
-                            let g = decodedData[index + 2]
-                            pixels[(height - i - 1) + (width - j - 1)] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                case (_, _): // upper right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let b = decodedData[index + 0]
-                            let r = decodedData[index + 1]
-                            let g = decodedData[index + 2]
-                            pixels[width * (height - i - 1) + (width - j - 1)] = TGAColor(r: r, g: g, b: b)
-                        }
-                    }
-                }
-                self.pixels = pixels
-            case .compressedBlackAndWhite:
-                let decodedData = decodeRunLengthData(width: width, height: height, depth: Int(imageSpec.pixelDepth), data: data, offset: offset)
-                switch (imageSpec.imageOriginX, imageSpec.imageOriginY) {
-                case (0, 0): //lower left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let e = decodedData[index + 0]
-                            pixels[width * (height - i - 1) + j] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                case (0, _): //upper left
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let e = decodedData[index + 0]
-                            pixels[width * i + j] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                case (_, 0): //lower right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let e = decodedData[index + 0]
-                            pixels[width * (height - i - 1) + (width - j - 1)] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                case (_, _): //upper right
-                    for i in 0..<height {
-                        for j in 0..<width {
-                            let index = 0 + count * width * i + count * j
-                            let e = decodedData[index + 0]
-                            pixels[width * (height - i - 1) + (width - j - 1)] = TGAColor(r: e, g: e, b: e)
-                        }
-                    }
-                }
-                self.pixels = pixels
-            case .uncompressedColorMapped:
-                self.pixels = []
-                break
-            case .runlengthColorMapped:
-                self.pixels = []
-                break
-            }
-            
-//            self.pixels = []
-        }
-        
-        // https://github.com/npedotnet/TGAReader/blob/master/src/c/tga_reader.c
-
-    }
-
-}
-
-fileprivate func decodeRunLengthData(width: Int, height: Int, depth: Int, data originalData: Data, offset: Int) -> Data {
-    var offset = offset
-    let elementCount = depth / 8
-    var elements = Data(repeating: 0, count: elementCount)
-    let decodedDataLength = elementCount * width * height
-    var decodedData = Data(repeating: 0, count: decodedDataLength)
-    var decodedLength = 0
-    while decodedLength < decodedDataLength {
-        let packet = originalData[offset]
-        offset += 1
-        if packet.b7 == 1 { // RunLength Packet
-            let count = (packet & 0x7F) + 1
-            for i in 0..<elementCount {
-                elements[i] = originalData[offset]
-                offset += 1
-            }
-            for _ in 0..<count {
-                for j in 0..<elementCount {
-                    decodedData[decodedLength] = elements[j]
-                    decodedLength += 1
-                }
-            }
-        } else { //RAW
-            let count = (Int(packet) + 1) * elementCount
-            for _ in 0..<count {
-                decodedData[decodedLength] = originalData[offset]
-                decodedLength += 1
-                offset += 1
-            }
-            
-        }
-    }
-    return decodedData
 }
 
 // MARK: - TGAFile.Footer

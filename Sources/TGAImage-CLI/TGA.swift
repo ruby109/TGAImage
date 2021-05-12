@@ -33,12 +33,6 @@ struct TGA: ParsableCommand {
             throw ValidationError("Please check your input file path.")
         }
         
-        guard data[(data.count - 18)...data.count-3] == Data("TRUEVISION-XFILE".utf8),
-              data[data.count-2] == UInt8(ascii: "."),
-              data[data.count-1] == 0x00 else {
-            throw ValidationError("Please check your input file type.")
-        }
-        
         if self.decoding {
             let decoder = TGADecoder()
             if let header = decoder.getTGAHeader(by: data[0...17]) {
@@ -46,7 +40,7 @@ struct TGA: ParsableCommand {
                 let imageData = decoder.getTGAImageData(by: data, header: header)
                 let image = generateCGImage(from: imageData.pixels, width: Int(header.imageSpecification.imageWidth), height: Int(header.imageSpecification.imageHeight))
                 
-                print(writeCGImage(image!, to: FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("/test.png")))
+                print(writeCGImage(image!, to: URL(string: "file://" + outputFilePath)!))
                 
                 
             }
@@ -60,7 +54,7 @@ struct TGA: ParsableCommand {
 }
 
 @discardableResult func writeCGImage(_ image: CGImage, to destinationURL: URL) -> Bool {
-    guard let destination = CGImageDestinationCreateWithURL(destinationURL as CFURL, kUTTypePNG, 1, nil) else { return false }
+    guard let destination = CGImageDestinationCreateWithURL(destinationURL as CFURL, kUTTypeJPEG, 1, nil) else { return false }
     CGImageDestinationAddImage(destination, image, nil)
     return CGImageDestinationFinalize(destination)
 }
