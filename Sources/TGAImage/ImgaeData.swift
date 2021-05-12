@@ -51,7 +51,8 @@ public extension TGAFile {
                         let color = getColor(by: Int(header.imageSpecification.pixelDepth), data: data[index...index+count-1])
                         switch (imageSpec.imageOriginX, imageSpec.imageOriginY) {
                         case (0, 0): //lower left
-                            pixels[width * (height - i - 1) + j] = color
+//                            pixels[width * (height - i - 1) + j] = color
+                            pixels[width * i + j] = color
                         case (0, _): //upper left
                             pixels[width * i + j] = color
                         case (_, 0): //lower right
@@ -89,6 +90,7 @@ public extension TGAFile {
                 self.pixels = []
                 break
             }
+            
         }
         
         // https://github.com/npedotnet/TGAReader/blob/master/src/c/tga_reader.c
@@ -152,8 +154,8 @@ fileprivate func getColor(by pixelDepth: Int, data: Data) -> TGAColor {
         return TGAColor(r: r, g: g, b: b)
     case 32:
         let b = data[0]
-        let r = data[1]
-        let g = data[2]
+        let g = data[1]
+        let r = data[2]
         let a = data[3]
         return TGAColor(r: r, g: g, b: b, a: a)
     default:

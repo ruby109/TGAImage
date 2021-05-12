@@ -54,7 +54,13 @@ struct TGA: ParsableCommand {
 }
 
 @discardableResult func writeCGImage(_ image: CGImage, to destinationURL: URL) -> Bool {
-    guard let destination = CGImageDestinationCreateWithURL(destinationURL as CFURL, kUTTypeJPEG, 1, nil) else { return false }
+    let type: CFString
+    if destinationURL.absoluteString.contains("png") {
+        type = kUTTypePNG
+    } else {
+        type = kUTTypeJPEG
+    }
+    guard let destination = CGImageDestinationCreateWithURL(destinationURL as CFURL, type, 1, nil) else { return false }
     CGImageDestinationAddImage(destination, image, nil)
     return CGImageDestinationFinalize(destination)
 }
